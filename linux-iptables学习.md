@@ -10,7 +10,7 @@
 
 + 数据包走向
 
-![img](https://s2.51cto.com/images/202302/d4d8c3453509e008ae34713e2ffb5fb8e4b762.png?x-oss-process=image/watermark,size_14,text_QDUxQ1RP5Y2a5a6i,color_FFFFFF,t_30,g_se,x_10,y_10,shadow_20,type_ZmFuZ3poZW5naGVpdGk=/format,webp)
+![img](https://www.zsythink.net/wp-content/uploads/2017/02/021217_0051_6.png)
 
 + iptables命令参数解释
 
