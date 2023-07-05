@@ -41,7 +41,7 @@
 
 # 数据包走向
 
-![img](https://www.zsythink.net/wp-content/uploads/2017/02/021217_0051_6.png)
+![img](F:\刘东\blog\imgs\数据包走向.webp)
 
 # 命令
 
