@@ -3,7 +3,7 @@
 | 表     | 链                                              |
 | ------ | ----------------------------------------------- |
 | filter | INPUT、FORWARD、OUTPUT                          |
-| raw    | PREROUTING、OUTPUT                              |
+| 源码    | PREROUTING、OUTPUT                              |
 | mangle | PREROUTING、INPUT、FORWARD、OUTPUT、POSTROUTING |
 | nat    | PREROUTING、INPUT、OUTPUT、POSTROUTING          |
 
