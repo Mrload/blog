@@ -41,11 +41,11 @@
 
 # 数据包走向
 
-![img](F:\刘东\blog\imgs\数据包走向.webp)
+![img](./imgs/数据包走向.webp)
 
 # 命令
 
-![](.\imgs\iptables命令参数)
+![](./imgs/iptables命令参数)
 
 ## 语法规则
 
