@@ -9,3 +9,6 @@
 # [linux-iptables学习](https://github.com/Mrload/blog/blob/80bd8b40685090293175d6ca839602ebd4bcd3c8/linux-iptables%E5%AD%A6%E4%B9%A0.md)
 
 # [linux命令](https://github.com/Mrload/blog/blob/52bd03103c0070047fbbc3e4b82283cd0d40c7f3/linux%E5%91%BD%E4%BB%A4.md)
+
+[引]: ../linux/变量.md
+
