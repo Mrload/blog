@@ -34,7 +34,7 @@
 一般有两种操作——“通（ACCEPT）”、“堵（DROP）”，还有一种操作很常见REJECT。
 
 ```bash
--j ACCEPT（允许）、DROP（丢弃）、REJECT（拒绝）、RETURN（返回）
+ACCEPT（允许）、DROP（丢弃）、REJECT（拒绝）、RETURN（返回）
 ```
 
 
@@ -360,67 +360,114 @@ iptables -I Filter -m mac –mac-source 00:0F:EA:25:51:37 -p tcp --dport 110 -j 
 
 ## 一个新的虚拟机
 
-##  默认开启防火墙，iptables的默认规则
++ 桥接
 
-+ 生成环境中，iptables的INPUT表默认规则应该是drop
-+ 
++ IP为192.168.4.22
 
 ## 安装docker,用于各类端口测试
 
-## 开发环境
+##  开启iptables服务
 
-
-```bash
-# iptables                []可选 不加必选
-# [-t table,不加就是filter表]  # 选的哪张表
-# -L [chain,不加就是all]  以链分类来列出规则,policy表示默认规则【accept全部接受】
-	# -nL 可以把解读为域名和程序名的IP和端口号显示出来
-	# -nvL 显示更新详细的内容
-# -F [chain，不加就是当前表的全部链] 清空规则
-# -A chain 将一个或多个规则附加到选定链的末端 
-# -I chain [rulenum,在该序号前，不加就是首位] 插入一条规则
-# -D chain rulenum  删除指定链的某个规则
-# -p/--protocol  要检查的规则或数据包的协议 tcp、udp等，默认为all,前方加！可反选 【!tcp】表示除tcp外的协议
-# -s/-src IP或者IP断,源地址，可以是网络名称、主机名、网络IP地址（带/mask）或普通IP地址
-# --sport  源端口，要先指定协议
-# -i 进入的网卡
-# -d/--dst  IP或者IP断,目的地址
-# --dport  目标端口，要先指定协议
-# -o 发出的网卡
-# -j 动作
-
-	# ACCEPT（允许）、DROP（丢弃）、REJECT（拒绝）、RETURN（返回）
-	
-	# REDIRECT 本机重定向
-	# --to-ports 重定向端口
-	
-	# NAT 网络地址转换
-	
-	# DNAT 目标网络地址转换
-	# --to-destination 重定向目标地址IP:port，不加port表示port与原始一致
-	
-	# SNAT 源网络地址转换
-	# --to-source 修改后的源地址IP:port，不加port表示port与原始一致
-	
-	# MASQUERADE 网络地址伪装
-	
-
-```
-
-+ 例子
++ 关闭防火墙
 
 ```bash
-# 拒绝ip【a.a.a.a】的请求
-iptables [-t filter] -A INPUT -s a.a.a.a -j DROP
-
-# 将到80端口的数据包重定向到本机的8080端口
-iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-ports 8080
-
-# 将访问【本机IP:80】的请求，转发给【172.18.27.8:8080】
-iptables -t nat -A PREROUTING -p tcp --dport 80 -j DNAT --to-destination 172.18.27.8:8080 
-iptables -t nat -A POSTROUTING -p tcp [-s 172.18.27.8<我觉得要加上>] --dport 8080 -j SNAT --to-source [本机IP]
-# 和上面一样，另种写法，MASQUERADE相比于SNAT是动态获取本机地址后自动伪装，在本机IP会动态变化时尤其有用
-iptables -t nat -A PREROUTING -p tcp --dport 80 -j DNAT --to-destination 172.18.27.8:8080
-iptables -t nat -A POSTROUTING -p tcp --dport 8080 -j MASQUERADE
-
+systemnctl stop firewalld
 ```
+
++ 安装 启动 iptables服务
+
+```bash
+yum install iptables-services
+systemctl start iptables
+```
+
+## 部署为生成环境
+
++ 生产环境基本需求
+
+  让内网的Ip全部通过，外网IP添加到白名单，其他一切拒绝
+
+### 清空所有重新配置
+
+```bash
+iptables -F      #清空所有的防火墙规则
+
+iptables -X      #删除用户自定义的空链,这里会把docker配置的链都清空，需要重启docker服务能重新生成
+
+iptables -Z      #清空计数
+```
+
+### 配置允许ssh访问
+
+```bash
+iptables -A INPUT -s 192.168.4.0/24 -p tcp --dport 22 -j ACCEPT
+```
+
+### 允许本地回环可以正常使用
+
++ 为了127.0.0.1可以正常使用
+
+```bash
+iptables -A INPUT -i lo -j ACCEPT
+
+iptables -A OUTPUT -o lo -j ACCEPT
+```
+
+## 设置默认的规则
+
++ 默认INPUT 、FORWARD都禁止了，OUTPUT允许
+
+```bash
+iptables -P INPUT DROP
+iptables -P FORWARD DROP
+iptables -P OUTPUT ACCEPT
+```
+
+## 开启各类对外端口
+
++ 使用docker在80端口运行nginx默认http服务，81端口开启了一个ssh转发【转发至192.168.4.5:22端口】
++ 82端口使用python启动一个本地的http服务
+
+```bash
+iptables -A INPUT -p tcp --dport 80:82 -j ACCEPT
+```
+
+### 允许被ping
+
+```bash
+iptables -A INPUT -p icmp --icmp-type 8 -j ACCEPT #允许被ping
+```
+
+### 【没能彻底理解的】已经建立的连接得让它进来
+
+```bash
+iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# ESTABLISHED：已建立的连接；
+# RELATED：相关联的连接，当前连接是一个新请求，但附属于某个已存在的连接；
+# 如果不加这一个规则，数据包回不来，服务器没办法上外网
+```
+
+### 另一种
+
+```bash
+# 将filter表的INPUT默认规则设置为ACCEPT
+# 然后添加
+iptables -A INPUT -j REJECT --reject-with icmp-host-prohibited
+
+# 这一条规则是拒绝所有数据包
+# 所以如果有需要通过的数据包，必须将其添加到此行的前面去才行
+```
+
+### Docker容器映射的端口没办法通过INPUT链阻止
+
+```bash
+# 没仔细研究
+# 大体看了一下
+# 需要去nat表里处理相应的规则
+```
+
+
+
+
+
